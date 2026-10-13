@@ -1,60 +1,82 @@
-# CryptoKet - NFT MarketPlace
+# CryptoKet · NFT Marketplace
 
-![App Screenshot](assets/nft-marketplace.jpg)
+**Explore the connection between a web interface, wallet transactions, and marketplace contracts.**
 
-CryptoKet is made using the immense power of Solidity and Next.js. This project combines futuristic elements of Web3 blockchain development and the popular culture wave of non-fungible tokens (NFT).
+Next.js · Solidity · Hardhat · ethers.js · IPFS
 
-This application includes creation, buying, selling and reselling of NFTs and user authentication through metamask wallet. Its theme can be switched to both dark and light mode. 
+![CryptoKet interface](assets/nft-marketplace.jpg)
 
-Context api is used for state management and tailwind css is used for styling the application. Solidity is used to write smart contract and hardhat is used to test the smart contract.
+## Purpose
 
-## Getting Started
+This project demonstrates an NFT marketplace workflow across the frontend and contract layers. It is intended for developers studying wallet interaction, token metadata, and on-chain ownership rather than a production marketplace deployment.
 
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+## Implemented flows
 
-First, run the development server:
+- Connect a browser wallet through Web3Modal/MetaMask-compatible APIs.
+- Upload media and metadata through an IPFS client.
+- Create a token and offer it for sale.
+- Browse marketplace items and inspect NFT details.
+- Buy listed items and resell owned tokens.
+- View owned and listed NFTs, with dark/light interface themes.
+
+## Start the frontend
+
+Open the source directory with Node.js/npm installed:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The interface runs at [localhost:3000](http://localhost:3000). Marketplace reads and transactions require the chain, contract, and storage setup below; starting the UI alone does not provide them.
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+## Configure the contract and storage
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+1. Review [`hardhat.config.js`](hardhat.config.js). It currently reads an absent `.secret` file at module load even though the resulting variable is unused by the included network configuration. Resolve that local configuration dependency before running Hardhat.
+2. Use a local development chain and a disposable development wallet. Keep the wallet network aligned with the RPC endpoint used by the frontend.
+3. Review [`scripts/deploy.js`](scripts/deploy.js) and deploy the included contract to that development chain.
+4. Set the deployed contract address in [`context/constants.js`](context/constants.js) and keep its ABI aligned with the contract.
+5. Configure a working IPFS upload service in [`context/NFTContext.js`](context/NFTContext.js). The embedded Infura endpoint may require current provider configuration and credentials.
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+After correcting the local Hardhat configuration, the existing development tools are:
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
-
-# Basic Sample Hardhat Project
-
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts.
-
-Try running some of the following tasks:
-
-```shell
-npx hardhat accounts
+```bash
 npx hardhat compile
-npx hardhat clean
-npx hardhat test
 npx hardhat node
-node scripts/sample-script.js
-npx hardhat help
 ```
+
+Run deployment in a separate terminal against the running local node:
+
+```bash
+npx hardhat run scripts/deploy.js --network localhost
+```
+
+## Architecture
+
+```mermaid
+flowchart LR
+    UI[Next.js pages] --> C[NFT React context]
+    C --> W[Browser wallet and ethers.js]
+    W --> S[Solidity marketplace contract]
+    C --> I[IPFS media and metadata]
+    C --> R[RPC reads]
+    R --> S
+```
+
+The React context coordinates wallet state and marketplace operations. The contract records listings, ownership transitions, and sale prices; IPFS stores token metadata and media referenced by token URIs.
+
+## Source guide
+
+| Path | Responsibility |
+|---|---|
+| [`pages/`](pages/) | Browse, create, detail, ownership, and resale screens |
+| [`components/`](components/) | Cards, forms, navigation, and dialogs |
+| [`context/NFTContext.js`](context/NFTContext.js) | Wallet, contract, and IPFS integration |
+| [`contracts/NFTMarketplace.sol`](contracts/NFTMarketplace.sol) | Token and marketplace logic |
+| [`scripts/deploy.js`](scripts/deploy.js) | Contract deployment |
+
+## Project boundaries
+
+This repository uses older pinned framework and Web3 dependencies. The included sample test is not evidence of a marketplace security audit. Local configuration and external storage must be completed before the full flow is usable; use development assets while evaluating it.
+
+Bootstrapped with [Next.js](https://nextjs.org/) and Hardhat. See the [Next.js documentation](https://nextjs.org/docs) for frontend framework guidance.
